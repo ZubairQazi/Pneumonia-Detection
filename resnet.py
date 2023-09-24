@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
 
-from torchvision import models, transforms
+from torchvision.models import resnet18, ResNet18_Weights
 
 from sklearn.metrics import accuracy_score
 
@@ -12,11 +12,13 @@ from utils.pneumonia_dataset import load_dataset
 train_dataset = load_dataset('data/train')
 valid_dataset = load_dataset('data/val')
 
+print('Loading Training Dataset...')
 train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
+print('Loading Validation Dataset...\n')
 valid_loader = DataLoader(valid_dataset, batch_size=32)
 
 # TRAINING
-model = models.resnet18(pretrained=True)
+model = resnet18(weights=ResNet18_Weights.DEFAULT)
 
 num_classes = 2
 model.fc = nn.Linear(model.fc.in_features, num_classes)
@@ -34,6 +36,7 @@ model.to(device)
 prev_valid_loss = float('inf')
 convergence_counter = 0
 
+print(f'Entering training loop (device => {device})...\n')
 try:
     # Training loop
     for epoch in range(num_epochs):
@@ -84,6 +87,8 @@ try:
             accuracy = accuracy_score(all_labels, all_preds)
             print(f"Validation Accuracy: {accuracy}")
         
+        print()
+        
         # Check for convergence
         if valid_loss >= prev_valid_loss:
             convergence_counter += 1
@@ -103,3 +108,6 @@ except Exception as e:
     print(f"An error occurred: {str(e)}")
     torch.save(model.state_dict(), "pneumonia_model_errored.pth")
     print("Model saved due to error.")
+
+
+torch.cuda.empty_cache()
