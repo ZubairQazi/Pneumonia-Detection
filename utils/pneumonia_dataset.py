@@ -32,7 +32,7 @@ class PneumoniaImageDataset(Dataset):
         return image, label
     
 
-def load_dataset(data_path, file_extensions=['jpeg']):
+def load_dataset(data_path, file_extensions=['jpeg'], verbose=False):
 
     image_paths = []
     labels = []
@@ -50,11 +50,12 @@ def load_dataset(data_path, file_extensions=['jpeg']):
             image_paths.extend(glob.glob(os.path.join(class_folder_path, f'*.{ext}')))
             labels.extend([class_to_label[class_name]] * len(glob.glob(os.path.join(class_folder_path, f'*.{ext}'))))
 
-    print("Number of images found:", len(image_paths))
-    print("Number of labels found:", len(labels))
+    if verbose:
+        print("Number of images found:", len(image_paths))
+        print("Number of labels found:", len(labels))
 
     data_transforms = transforms.Compose([
-        ResizeAndPad(300, 200),
+        ResizeAndPad(600, 400),
         transforms.ToTensor(), 
     ])
 
@@ -68,7 +69,7 @@ def load_dataset(data_path, file_extensions=['jpeg']):
 
     # Update the transform to include normalization
     data_transforms = transforms.Compose([
-        ResizeAndPad(300, 200),
+        ResizeAndPad(600, 400),
         transforms.ToTensor(),
         transforms.Normalize(mean=mean, std=std)
     ])
@@ -80,4 +81,4 @@ def load_dataset(data_path, file_extensions=['jpeg']):
 
 
 if __name__ == '__main__':
-    load_dataset(input('Enter dataset path: '))
+    load_dataset(input('Enter dataset path: '), verbose=True)
