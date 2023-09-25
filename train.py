@@ -104,12 +104,14 @@ try:
         prev_valid_loss = valid_loss
 
     # Save the model after training
-    torch.save(model.state_dict(), f"{model_name}.pth")
+    # torch.save(model.state_dict(), f"{model_name}.pth")
+    torch.jit.save(model, f"{model_name}_traced.pt")
     print("Model saved successfully.")
 
 except Exception as e:
     print(f"An error occurred: {str(e)}")
-    torch.save(model.state_dict(), f"{model_name}_errored.pth")
+    # torch.save(model.state_dict(), f"{model_name}_errored.pth")
+    torch.jit.save(model, f"{model_name}_traced_errored.pt")
     print("Model saved due to error.")
 
 
