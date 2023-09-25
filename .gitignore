@@ -1,3 +1,7 @@
 test/
 train/
 val/
+
+*.pth
+
+__pycache__/
