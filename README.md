@@ -36,7 +36,7 @@ Usage
 
 To use the model to make a prediction on a new image, run the following command:
 
-`python3 predict.py image_path`
+`python3 predict.py model_path image_path`
 
 This will print the probability of pneumonia in the image.
 
