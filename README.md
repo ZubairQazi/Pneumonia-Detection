@@ -1,4 +1,4 @@
-# Pneumonia-Detection
+# Pneumonia Detection
 
 This project uses PyTorch to develop a deep learning model to detect pneumonia in chest X-ray images.
 
