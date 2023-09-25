@@ -12,7 +12,7 @@ from utils.pneumonia_dataset import load_dataset
 
 model_name = input('Enter model name (no extensions): ')
 
-print('Loading Training Dataset & Dataloader...')
+print('\nLoading Training Dataset & Dataloader...')
 train_dataset = load_dataset('data/train')
 train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
 
@@ -104,15 +104,14 @@ try:
         prev_valid_loss = valid_loss
 
     # Save the model after training
-    # torch.save(model.state_dict(), f"{model_name}.pth")
-    torch.jit.save(model, f"{model_name}_traced.pt")
+    torch.save(model.state_dict(), f"{model_name}.pth")
+    torch.jit.save(torch.jit.script(model), f"{model_name}_traced.pt")
     print("Model saved successfully.")
 
 except Exception as e:
     print(f"An error occurred: {str(e)}")
-    # torch.save(model.state_dict(), f"{model_name}_errored.pth")
-    torch.jit.save(model, f"{model_name}_traced_errored.pt")
+    torch.save(model.state_dict(), f"{model_name}_errored.pth")
+    torch.jit.save(torch.jit.script(model), f"{model_name}_traced_errored.pt")
     print("Model saved due to error.")
-
 
 torch.cuda.empty_cache()
