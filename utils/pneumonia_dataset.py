@@ -4,13 +4,14 @@ from torchvision import transforms, utils
 
 import os
 import glob
+import pickle
 
 from PIL import Image
 
 import numpy as np
 import pandas as pd
 
-from utils.custom_transforms import ResizeAndPad, calculate_mean_std
+from . import ResizeAndPad, calculate_mean_std
 
 
 class PneumoniaImageDataset(Dataset):
@@ -55,7 +56,7 @@ def load_dataset(data_path, file_extensions=['jpeg'], verbose=False):
         print("Number of labels found:", len(labels))
 
     data_transforms = transforms.Compose([
-        ResizeAndPad(600, 400),
+        ResizeAndPad(1200, 800),
         transforms.ToTensor(), 
     ])
 
@@ -66,6 +67,9 @@ def load_dataset(data_path, file_extensions=['jpeg'], verbose=False):
 
     # Calculate mean and std for normalization
     mean, std = calculate_mean_std(data_loader)
+
+    with open('pneumonia_mean_std.pkl', 'wb') as f:
+        pickle.dump((mean, std), f)
 
     # Update the transform to include normalization
     data_transforms = transforms.Compose([
