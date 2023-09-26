@@ -7,7 +7,7 @@ from torchvision.models import resnet18, ResNet18_Weights
 
 from sklearn.metrics import accuracy_score
 
-from utils.pneumonia_dataset import load_dataset
+from utils import load_dataset
 
 
 model_name = input('Enter model name (no extensions): ')

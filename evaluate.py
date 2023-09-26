@@ -8,7 +8,7 @@ from torchvision.datasets import ImageFolder
 
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
-from utils.pneumonia_dataset import load_dataset
+from utils import load_dataset
 
 
 # Load the pre-trained ResNet-18 model

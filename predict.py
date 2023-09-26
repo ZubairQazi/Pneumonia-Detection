@@ -5,7 +5,7 @@ from PIL import Image
 import sys
 import pickle
 
-from utils.custom_transforms import ResizeAndPad
+from utils import ResizeAndPad
 
 traced_model = torch.jit.load(sys.argv[1])
 traced_model.eval()
