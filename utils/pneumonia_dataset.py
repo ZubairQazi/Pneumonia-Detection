@@ -11,8 +11,7 @@ from PIL import Image
 import numpy as np
 import pandas as pd
 
-from . import ResizeAndPad, calculate_mean_std
-
+from .custom_transforms import ResizeAndPad, calculate_mean_std
 
 class PneumoniaImageDataset(Dataset):
     def __init__(self, images, labels, transforms=None):
@@ -33,7 +32,7 @@ class PneumoniaImageDataset(Dataset):
         return image, label
     
 
-def load_dataset(data_path, file_extensions=['jpeg'], verbose=False):
+def load_dataset(data_path, file_extensions=['jpeg'], subset_size=None, verbose=False):
 
     image_paths = []
     labels = []
@@ -56,9 +55,13 @@ def load_dataset(data_path, file_extensions=['jpeg'], verbose=False):
         print("Number of labels found:", len(labels))
 
     data_transforms = transforms.Compose([
-        ResizeAndPad(1200, 800),
+        ResizeAndPad(512, 512),
         transforms.ToTensor(), 
     ])
+
+    if subset_size is not None:
+        image_paths = image_paths[:subset_size]
+        labels = labels[:subset_size]
 
     dataset = PneumoniaImageDataset(image_paths, labels, transforms=data_transforms)
 
@@ -73,7 +76,8 @@ def load_dataset(data_path, file_extensions=['jpeg'], verbose=False):
 
     # Update the transform to include normalization
     data_transforms = transforms.Compose([
-        ResizeAndPad(600, 400),
+        ResizeAndPad(512, 512),
+        transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
         transforms.Normalize(mean=mean, std=std)
     ])
