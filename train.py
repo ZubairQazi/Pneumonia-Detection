@@ -7,6 +7,11 @@ from torchvision.models import resnet18, ResNet18_Weights
 
 from sklearn.metrics import accuracy_score
 
+import sys
+
+import mlflow
+import mlflow.tracking
+
 from utils import load_dataset
 
 
@@ -16,15 +21,22 @@ print('\nLoading Training Dataset & Dataloader...')
 train_dataset = load_dataset('data/train')
 train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
 
-print('\nLoading Validation Dataset & Dataloader...\n')
+print('Loading Validation Dataset & Dataloader...\n')
 valid_dataset = load_dataset('data/val')
 valid_loader = DataLoader(valid_dataset, batch_size=32, shuffle=True)
 
 # TRAINING
-model = resnet18(weights=ResNet18_Weights.DEFAULT)
 
-num_classes = 2
-model.fc = nn.Linear(model.fc.in_features, num_classes)
+# User-inputted model
+if len(sys.argv) > 1:
+    model = nn.Module()
+    model.load_state_dict(torch.load(sys.argv[1]))
+
+else:
+    model = resnet18(weights=ResNet18_Weights.DEFAULT)
+
+    num_classes = 2
+    model.fc = nn.Linear(model.fc.in_features, num_classes)
 
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=0.001)
@@ -38,6 +50,10 @@ model.to(device)
 
 prev_valid_loss = float('inf')
 convergence_counter = 0
+
+mlflow.start_run()
+
+mlflow.log_param("model_name", model_name)
 
 print(f'Entering training loop (device => {device}, epochs => {num_epochs})...\n')
 try:
@@ -60,9 +76,11 @@ try:
         
         # Print training loss for this epoch
         print(f"Epoch {epoch+1}/{num_epochs}, Loss: {running_loss/len(train_loader)}")
+
+        mlflow.log_metric("train_loss", running_loss/len(train_loader), epoch)
         
         # Validation
-        model.eval()  # Set the model to evaluation mode
+        model.eval()
         valid_loss = 0.0
         all_preds = []
         all_labels = []
@@ -84,6 +102,8 @@ try:
         
         # Print validation loss for this epoch
         print(f"Validation Loss: {valid_loss/len(valid_loader)}")
+
+        mlflow.log_metric("valid_loss", valid_loss/len(valid_loader), epoch)
         
         # Calculate validation accuracy at each quarter epoch
         if (i + 1) % quarter_epoch == 0:
@@ -105,8 +125,14 @@ try:
 
     # Save the model after training
     torch.save(model.state_dict(), f"{model_name}.pth")
-    torch.jit.save(torch.jit.script(model), f"{model_name}_traced.pt")
+    scripted_model = torch.jit.script(model)
+    torch.jit.save(scripted_model, f"{model_name}_traced.pt")
     print("Model saved successfully.")
+
+    # Register the model in MLflow
+    mlflow.pytorch.log_model(model, "model")
+    mlflow.pytorch.log_model(scripted_model, "scripted_model")
+    mlflow.end_run()
 
 except Exception as e:
     print(f"An error occurred: {str(e)}")
