@@ -38,14 +38,22 @@ else:
     num_classes = 2
     model.fc = nn.Linear(model.fc.in_features, num_classes)
 
-criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters(), lr=0.001)
+mlflow.log_params(model.named_parameters())
 
-num_epochs = 50  # Maximum number of epochs
+criterion = nn.CrossEntropyLoss()
+
+learning_rate, weight_decay, num_epochs = 1e-5, 5e-4, 20
 quarter_epoch = num_epochs // 4
 patience = 5     # Number of epochs to wait for convergence
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+mlflow.log_param("learning rate", learning_rate)
+mlflow.log_param("num epochs", num_epochs)
+mlflow.log_param("weight decay", weight_decay)
+
+params_1x = [param for name, param in model.named_parameters() if 'fc' not in str(name)]
+optimizer = torch.optim.Adam([{'params':params_1x}, {'params': model.fc.parameters(), 'lr': learning_rate*10}], lr=learning_rate, weight_decay=weight_decay)
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model.to(device)
 
 prev_valid_loss = float('inf')
@@ -109,6 +117,7 @@ try:
         if (i + 1) % quarter_epoch == 0:
             accuracy = accuracy_score(all_labels, all_preds)
             print(f"Validation Accuracy: {accuracy}")
+            mlflow.log_metric("validation accuracy", accuracy)
         
         print()
         
@@ -124,9 +133,9 @@ try:
         prev_valid_loss = valid_loss
 
     # Save the model after training
-    torch.save(model.state_dict(), f"{model_name}.pth")
+    mlflow.pytorch.save_state_dict(model.state_dict(), f"models/{model_name}.pth")
     scripted_model = torch.jit.script(model)
-    torch.jit.save(scripted_model, f"{model_name}_traced.pt")
+    mlflow.pytorch.save_model(scripted_model, f"models/{model_name}_traced")
     print("Model saved successfully.")
 
     # Register the model in MLflow
@@ -136,8 +145,8 @@ try:
 
 except Exception as e:
     print(f"An error occurred: {str(e)}")
-    torch.save(model.state_dict(), f"{model_name}_errored.pth")
-    torch.jit.save(torch.jit.script(model), f"{model_name}_traced_errored.pt")
+    mlflow.pytorch.save_state_dict(model.state_dict(), f"{model_name}_errored.pth")
+    mlflow.pytorch.save_model(torch.jit.script(model), f"{model_name}_traced_errored.pt")
     print("Model saved due to error.")
 
 torch.cuda.empty_cache()
